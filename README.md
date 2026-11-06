@@ -36,7 +36,7 @@ A menu-driven, console-based banking simulation built in **C** as a university l
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/jixsaw079/Bank-Management-System.git
+git clone https://github.com/Jixsaw79/Bank-Management-System.git
 cd Bank-Management-System
 ```
 
@@ -130,8 +130,8 @@ These are manual checks, not an automated test suite. Missing-file recovery, cor
 
 ## Project links
 
-- **Source repository:** https://github.com/jixsaw079/Bank-Management-System
-- **Portfolio project page:** https://jixsaw079.github.io/projects/bank-management-system/
+- **Source repository:** https://github.com/Jixsaw79/Bank-Management-System
+- **Portfolio project page:** https://jixsaw79.github.io/projects/bank-management-system/
 
 ## Academic note
 
