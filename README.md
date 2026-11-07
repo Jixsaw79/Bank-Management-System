@@ -1,37 +1,55 @@
 # Bank Management System in C
 
-A menu-driven, console-based banking simulation built in **C** as a university learning project. It keeps the implementation in a single C source file and uses standard file I/O to save account records between runs.
+A menu-driven, console-based banking simulation built in **C** as a university learning project. The project keeps the complete implementation in one C source file and uses standard file handling to preserve account records and transaction history between runs.
 
 > **Educational project only.** This program is not connected to a real bank and is not suitable for real financial data or production use.
 
 ## Features
 
 - Create accounts with automatically assigned account numbers
-- View all saved accounts and check an account's balance
-- Deposit and withdraw money with basic amount and balance checks
-- Transfer funds between two different accounts
-- Record a loan and repay an outstanding loan
-- Handle invalid menu choices, non-numeric input, unknown account numbers, and invalid amounts
-- Save account records to `accounts.txt` and load them on the next launch
-- Record initial deposits, deposits, withdrawals, transfers, loans, and loan repayments in `transactions.txt`
-- View transaction history for a specific account, including date/time, transaction type, amount, and resulting balance
-- Append transaction records so history is preserved between program runs
-- Save account changes after successful operations and when exiting
+- View all accounts and check an individual account's balance and outstanding loan
+- Deposit and withdraw money with input, amount, and balance validation
+- Transfer money between two different accounts
+- Apply for a simulated loan and repay an outstanding loan
+- View timestamped transaction history for an individual account
+- Validate numeric input, reject malformed values, and handle overlong input lines
+- Save account information after successful operations and when exiting
+- Load saved account information when the program starts
+- Preserve transaction history by appending new records to `transactions.txt`
+- Support up to **100 accounts**
+
+## Code organization
+
+The code is still a single beginner-friendly C file, but repeated tasks are handled by reusable helper functions:
+
+| Function | Responsibility |
+|---|---|
+| `readLine()` | Reads one complete line and safely discards excess input |
+| `readInt()` | Converts and validates integer input |
+| `readFloat()` | Converts and validates finite floating-point input |
+| `readName()` | Trims and validates customer names |
+| `findAccountIndex()` | Finds an account once, returning its array index or `-1` |
+| `canAddAmount()` | Checks whether a positive addition is safe |
+| `loadAccounts()` / `saveAccounts()` | Loads and saves account records |
+| `recordTransaction()` | Appends a timestamped transaction record |
+| `finishTransaction()` | Records a single-account operation and saves account data |
+
+The menu uses a `switch` statement, and account lookup is shared by operations instead of repeating the same search loop. These changes reduce duplication without removing any banking feature.
 
 ## Built with
 
-- **Language:** C (C11-compatible compiler recommended)
+- **Language:** C (C11)
 - **Compiler:** GCC
-- **Concepts:** structures, arrays, functions, loops, conditionals, console input/output, and file handling
+- **Concepts:** structures, arrays, functions, pointers, loops, conditionals, input validation, and file handling
 - **Storage:** local plain-text files
 
 ## Getting started
 
 ### Requirements
 
-- [Git](https://git-scm.com/) (optional, for cloning the repository)
-- GCC or another compatible C compiler
+- GCC or another C11-compatible compiler
 - A terminal, such as the VS Code integrated terminal
+- Git (optional, for cloning the repository)
 
 ### 1. Clone the repository
 
@@ -56,7 +74,11 @@ gcc -std=c11 -Wall -Wextra -Wpedantic Bank-Management-System.c -o bank.exe
 gcc -std=c11 -Wall -Wextra -Wpedantic Bank-Management-System.c -o bank
 ```
 
-Review compiler warnings rather than ignoring them. If your compiler reports a platform-specific issue, use a current GCC version.
+The project can also be compiled with `-Werror` to treat compiler warnings as errors:
+
+```bash
+gcc -std=c11 -Wall -Wextra -Wpedantic -Werror Bank-Management-System.c -o bank
+```
 
 ### 3. Run
 
@@ -72,60 +94,64 @@ Review compiler warnings rather than ignoring them. If your compiler reports a p
 ./bank
 ```
 
-The program runs in the terminal and presents a numbered menu. Choose an operation by entering its menu number.
+Follow the numbered menu and enter the number of the operation you want to perform.
 
 ## Data persistence
 
-The program stores account records in `accounts.txt` and transaction records in `transactions.txt`, both in the **current working directory** from which it is run. On startup, it attempts to load saved accounts. Successful balance-changing operations append transaction records to `transactions.txt`; account changes are written back to `accounts.txt`.
+The program uses two files in the **current working directory**:
 
-Each account record uses this format:
+- `accounts.txt` stores account number, customer name, balance, and outstanding loan.
+- `transactions.txt` stores the account number, transaction type, amount, resulting balance, and local date/time.
+
+An account record has this format:
 
 ```text
 accountNumber|name|balance|outstandingLoan
 ```
 
-- Account numbering starts at `1001` and continues after the highest account number loaded from the file.
-- The program supports up to **100 accounts**.
-- The pipe character (`|`) is the field separator, so avoid using it in account names.
-- The `.gitignore` file excludes `accounts.txt`, `transactions.txt`, and compiled executables so local generated data is not accidentally committed.
-
-**Important:** Keep both data files if you want to preserve local test records and their history. Deleting either file removes that file's saved data from the program's view. Do not put real or sensitive personal information in these files.
-
-## Project structure
+A transaction record has this format:
 
 ```text
-Bank-Management-System/
-├── Bank-Management-System.c   # Complete program in one C source file
-├── README.md                  # Project overview and run instructions
-├── .gitignore                 # Excludes generated files and build artifacts
-└── docs/
-    └── TESTING.md             # Manual QA results and scope
+accountNumber|transactionType|amount|balanceAfter|timestamp
 ```
 
-## Testing and QA
+Account numbering starts at `1001` and continues after the highest account number loaded from the account file. The pipe character (`|`) is used as a field separator, so it should not be included in account names.
 
-The project has been manually tested for core menu/input validation, valid and invalid deposits and withdrawals, transfers between existing accounts, transfers to unknown accounts, transaction history, and account persistence after restarting. The recorded results and test scope are in [`docs/TESTING.md`](docs/TESTING.md).
+The `.gitignore` file excludes the generated data files and compiled executables. Keep your local `accounts.txt` and `transactions.txt` files if you want to preserve test data and history. Do not store real or sensitive personal information in them.
 
-These are manual checks, not an automated test suite. Missing-file recovery, corrupted-file handling, and the maximum account-capacity limit are not claimed as tested.
+**Compatibility:** The refactored program keeps the existing account and transaction text formats, so existing data files from earlier versions remain compatible.
+
+## Testing
+
+The refactored source was compiled with strict warnings enabled:
+
+```bash
+gcc -std=c11 -Wall -Wextra -Wpedantic -Werror Bank-Management-System.c -o bank
+```
+
+A local end-to-end smoke test exercised account creation, deposit, withdrawal, transfer, loan application, loan repayment, transaction logging, and saving account data. The detailed manual QA scope and previously recorded checks are documented in [`docs/TESTING.md`](docs/TESTING.md).
+
+These checks do not make the program production-ready. Use fictional account details when testing.
 
 ## Known limitations
 
 - This is a learning exercise, not production banking software.
-- Account data is stored in plain text without authentication, encryption, or database-level protection.
-- The program uses `float` for monetary values; real financial systems should use a carefully designed representation such as integer minor units or a suitable decimal type.
+- Account data is stored in plain text without authentication or encryption.
+- The program uses `float` for money; real financial systems should use integer minor units or suitable decimal arithmetic.
 - Loan requests are recorded immediately for demonstration; there is no credit assessment or approval workflow.
-- Transaction history is a simple local text log; it is not tamper-proof and does not provide database transactions or crash recovery.
-- There is no concurrent-user handling or transaction recovery mechanism.
-- Input validation is intended for a local, single-user console application.
+- Transaction history is a local text log and is not tamper-proof.
+- File writes are not a full database transaction. A crash or disk error can leave account data and transaction history out of sync.
+- There is no concurrent-user handling or database-backed recovery.
 
 ## What this project demonstrates
 
 - Defining and using a `struct` to represent an account
-- Managing a collection of records with an array
-- Separating tasks into functions
-- Validating console input and checking account operations
+- Managing records with an array of structures
+- Organizing a program with reusable functions
+- Using pointers to update values through function parameters
+- Validating user input and checking banking operations
 - Reading and writing structured records with standard C file I/O
-- Appending transaction records and formatting local date/time with the C time library
+- Appending transaction records and formatting local date/time
 - Using Git and GitHub to version and publish a project
 
 ## Project links
