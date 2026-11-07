@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir test-run
           cd test-run
-          printf '%s\\n' \
+          printf '%s\n' \
             '1' 'Alice Smith' '100' \
             '1' 'Bob Jones' '200' \
             '3' '1001' '50' \
@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           cd test-run
-          printf '%s\\n' '2' '0' | ../bank-system > reload.txt
+          printf '%s\n' '2' '0' | ../bank-system > reload.txt
           grep -q 'Loaded 2 account(s)' reload.txt
           grep -q 'Alice Smith' reload.txt
           grep -q 'Bob Jones' reload.txt
