@@ -33,6 +33,7 @@ int readFloat(const char prompt[], float *value);
 int readName(char name[]);
 int canAddAmount(float current, float amount);
 int findAccountIndex(int accountNumber);
+int readAccountIndex(const char prompt[]);
 
 /* File and transaction helpers */
 int loadAccounts(void);
@@ -252,6 +253,26 @@ int findAccountIndex(int accountNumber)
     return -1;
 }
 
+
+/* Read an account number and return its array index, or -1 on failure. */
+int readAccountIndex(const char prompt[])
+{
+    int accountNumber;
+    int index;
+
+    if (!readInt(prompt, &accountNumber))
+    {
+        printf("Invalid account number.\\n");
+        return -1;
+    }
+
+    index = findAccountIndex(accountNumber);
+    if (index == -1)
+        printf("Account not found.\\n");
+
+    return index;
+}
+
 /* Load saved accounts without changing the existing text-file format. */
 int loadAccounts(void)
 {
@@ -399,48 +420,42 @@ void viewTransactionHistory(void)
     char type[32];
     char timestamp[64];
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
+    accountNumber = readAccountIndex("Enter account number: ");
+    if (accountNumber == -1)
         return;
-    }
 
-    if (findAccountIndex(accountNumber) == -1)
-    {
-        printf("Account not found.\n");
-        return;
-    }
+    accountNumber = accounts[accountNumber].accountNumber;
 
     file = fopen(TRANSACTION_FILE, "r");
     if (file == NULL)
     {
-        printf("No transaction history found for this account yet.\n");
+        printf("No transaction history found for this account yet.\\n");
         return;
     }
 
-    printf("\n========== TRANSACTION HISTORY ==========\n");
-    printf("Account: %d\n", accountNumber);
-    printf("%-20s %-18s %-12s %s\n", "Date / Time", "Transaction", "Amount", "Balance After");
-    printf("--------------------------------------------------------------------------\n");
+    printf("\\n========== TRANSACTION HISTORY ==========\\n");
+    printf("Account: %d\\n", accountNumber);
+    printf("%-20s %-18s %-12s %s\\n", "Date / Time", "Transaction", "Amount", "Balance After");
+    printf("--------------------------------------------------------------------------\\n");
 
-    while (fscanf(file, "%d|%31[^|]|%f|%f|%63[^\n]\n", &savedAccountNumber,
+    while (fscanf(file, "%d|%31[^|]|%f|%f|%63[^\\n]\\n", &savedAccountNumber,
                   type, &amount, &balance, timestamp) == 5)
     {
         if (savedAccountNumber == accountNumber)
         {
-            printf("%-20s %-18s %10.2f %16.2f\n", timestamp, type, amount, balance);
+            printf("%-20s %-18s %10.2f %16.2f\\n", timestamp, type, amount, balance);
             foundTransaction = 1;
         }
     }
 
     if (ferror(file))
-        printf("Warning: an error occurred while reading transaction history.\n");
+        printf("Warning: an error occurred while reading transaction history.\\n");
     fclose(file);
 
     if (!foundTransaction)
-        printf("No transactions recorded for this account yet.\n");
+        printf("No transactions recorded for this account yet.\\n");
 
-    printf("==========================================\n");
+    printf("==========================================\\n");
 }
 
 void createAccount(void)
@@ -505,88 +520,60 @@ void viewAccounts(void)
 
 void depositMoney(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter deposit amount: ", &amount))
     {
-        printf("Invalid amount.\n");
+        printf("Invalid amount.\\n");
         return;
     }
     if (!canAddAmount(accounts[index].balance, amount))
     {
-        printf("Deposit amount must be positive and within the supported balance range.\n");
+        printf("Deposit amount must be positive and within the supported balance range.\\n");
         return;
     }
 
     accounts[index].balance += amount;
-    printf("Deposit successful!\nNew balance: %.2f\n", accounts[index].balance);
+    printf("Deposit successful!\\nNew balance: %.2f\\n", accounts[index].balance);
     finishTransaction(index, "DEPOSIT", amount);
 }
 
 void withdrawMoney(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter withdrawal amount: ", &amount) || amount <= 0.0f)
     {
-        printf("Invalid withdrawal amount. Enter a number greater than zero.\n");
+        printf("Invalid withdrawal amount. Enter a number greater than zero.\\n");
         return;
     }
     if (amount > accounts[index].balance)
     {
-        printf("Insufficient balance.\n");
+        printf("Insufficient balance.\\n");
         return;
     }
 
     accounts[index].balance -= amount;
-    printf("Withdrawal successful!\nRemaining balance: %.2f\n", accounts[index].balance);
+    printf("Withdrawal successful!\\nRemaining balance: %.2f\\n", accounts[index].balance);
     finishTransaction(index, "WITHDRAWAL", amount);
 }
 
 void checkBalance(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
 
-    printf("Current balance: %.2f\nOutstanding loan: %.2f\n",
+    printf("Current balance: %.2f\\nOutstanding loan: %.2f\\n",
            accounts[index].balance, accounts[index].loan);
 }
 
@@ -655,83 +642,65 @@ void transferMoney(void)
 
 void applyLoan(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter loan amount: ", &amount))
     {
-        printf("Invalid amount.\n");
+        printf("Invalid amount.\\n");
         return;
     }
     if (!canAddAmount(accounts[index].loan, amount) ||
         !canAddAmount(accounts[index].balance, amount))
     {
-        printf("Loan amount must be positive and within the supported numeric range.\n");
+        printf("Loan amount must be positive and within the supported numeric range.\\n");
         return;
     }
 
     accounts[index].loan += amount;
     accounts[index].balance += amount;
-    printf("Loan recorded successfully for this educational simulation.\nOutstanding loan: %.2f\nAvailable balance: %.2f\n",
+    printf("Loan recorded successfully for this educational simulation.\\nOutstanding loan: %.2f\\nAvailable balance: %.2f\\n",
            accounts[index].loan, accounts[index].balance);
     finishTransaction(index, "LOAN", amount);
 }
 
 void repayLoan(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (accounts[index].loan <= 0.0f)
     {
-        printf("This account has no outstanding loan.\n");
+        printf("This account has no outstanding loan.\\n");
         return;
     }
 
-    printf("Outstanding loan: %.2f\n", accounts[index].loan);
+    printf("Outstanding loan: %.2f\\n", accounts[index].loan);
     if (!readFloat("Enter repayment amount: ", &amount) || amount <= 0.0f)
     {
-        printf("Invalid repayment amount. Enter a number greater than zero.\n");
+        printf("Invalid repayment amount. Enter a number greater than zero.\\n");
         return;
     }
     if (amount > accounts[index].loan)
     {
-        printf("Repayment cannot exceed the outstanding loan.\n");
+        printf("Repayment cannot exceed the outstanding loan.\\n");
         return;
     }
     if (amount > accounts[index].balance)
     {
-        printf("Insufficient balance to make this repayment.\n");
+        printf("Insufficient balance to make this repayment.\\n");
         return;
     }
 
     accounts[index].balance -= amount;
     accounts[index].loan -= amount;
-    printf("Loan repayment successful!\nRemaining loan: %.2f\nRemaining balance: %.2f\n",
+    printf("Loan repayment successful!\\nRemaining loan: %.2f\\nRemaining balance: %.2f\\n",
            accounts[index].loan, accounts[index].balance);
     finishTransaction(index, "LOAN_REPAYMENT", amount);
 }
