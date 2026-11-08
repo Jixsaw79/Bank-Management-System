@@ -33,6 +33,7 @@ int readFloat(const char prompt[], float *value);
 int readName(char name[]);
 int canAddAmount(float current, float amount);
 int findAccountIndex(int accountNumber);
+int readAccountIndex(const char prompt[]);
 
 /* File and transaction helpers */
 int loadAccounts(void);
@@ -252,6 +253,26 @@ int findAccountIndex(int accountNumber)
     return -1;
 }
 
+
+/* Read an account number and return its array index, or -1 on failure. */
+int readAccountIndex(const char prompt[])
+{
+    int accountNumber;
+    int index;
+
+    if (!readInt(prompt, &accountNumber))
+    {
+        printf("Invalid account number.\n");
+        return -1;
+    }
+
+    index = findAccountIndex(accountNumber);
+    if (index == -1)
+        printf("Account not found.\n");
+
+    return index;
+}
+
 /* Load saved accounts without changing the existing text-file format. */
 int loadAccounts(void)
 {
@@ -399,17 +420,11 @@ void viewTransactionHistory(void)
     char type[32];
     char timestamp[64];
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
+    accountNumber = readAccountIndex("Enter account number: ");
+    if (accountNumber == -1)
         return;
-    }
 
-    if (findAccountIndex(accountNumber) == -1)
-    {
-        printf("Account not found.\n");
-        return;
-    }
+    accountNumber = accounts[accountNumber].accountNumber;
 
     file = fopen(TRANSACTION_FILE, "r");
     if (file == NULL)
@@ -505,21 +520,12 @@ void viewAccounts(void)
 
 void depositMoney(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter deposit amount: ", &amount))
     {
         printf("Invalid amount.\n");
@@ -538,21 +544,12 @@ void depositMoney(void)
 
 void withdrawMoney(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter withdrawal amount: ", &amount) || amount <= 0.0f)
     {
         printf("Invalid withdrawal amount. Enter a number greater than zero.\n");
@@ -571,20 +568,10 @@ void withdrawMoney(void)
 
 void checkBalance(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
 
     printf("Current balance: %.2f\nOutstanding loan: %.2f\n",
            accounts[index].balance, accounts[index].loan);
@@ -655,21 +642,12 @@ void transferMoney(void)
 
 void applyLoan(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (!readFloat("Enter loan amount: ", &amount))
     {
         printf("Invalid amount.\n");
@@ -691,21 +669,12 @@ void applyLoan(void)
 
 void repayLoan(void)
 {
-    int accountNumber;
-    int index;
+    int index = readAccountIndex("Enter account number: ");
     float amount;
 
-    if (!readInt("Enter account number: ", &accountNumber))
-    {
-        printf("Invalid account number.\n");
-        return;
-    }
-    index = findAccountIndex(accountNumber);
     if (index == -1)
-    {
-        printf("Account not found.\n");
         return;
-    }
+
     if (accounts[index].loan <= 0.0f)
     {
         printf("This account has no outstanding loan.\n");

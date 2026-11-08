@@ -1,0 +1,56 @@
+name: C build and smoke test
+
+on:
+  push:
+    branches: [main, readability-refactor]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compile with strict warnings
+        run: gcc -std=c11 -Wall -Wextra -Wpedantic -Werror Bank-Management-System.c -o bank-system
+
+      - name: Test banking operations and saved files
+        shell: bash
+        run: |
+          mkdir test-run
+          cd test-run
+          printf '%s\n' \
+            '1' 'Alice Smith' '100' \
+            '1' 'Bob Jones' '200' \
+            '3' '1001' '50' \
+            '4' '1001' '25' \
+            '6' '1001' '1002' '25' \
+            '7' '1001' '100' \
+            '8' '1001' '50' \
+            '5' '1001' \
+            '9' '1001' \
+            '0' | ../bank-system > output.txt
+
+          grep -q 'Account created successfully!' output.txt
+          grep -q 'Deposit successful!' output.txt
+          grep -q 'Withdrawal successful!' output.txt
+          grep -q 'Transfer successful!' output.txt
+          grep -q 'Loan recorded successfully' output.txt
+          grep -q 'Loan repayment successful!' output.txt
+          grep -q 'Current balance: 150.00' output.txt
+          grep -q 'Outstanding loan: 50.00' output.txt
+          grep -q '1001|Alice Smith|150.00|50.00' accounts.txt
+          grep -q '1002|Bob Jones|225.00|0.00' accounts.txt
+          test "$(wc -l < transactions.txt)" -eq 8
+
+      - name: Test loading saved accounts
+        shell: bash
+        run: |
+          cd test-run
+          printf '%s\n' '2' '0' | ../bank-system > reload.txt
+          grep -q 'Loaded 2 account(s)' reload.txt
+          grep -q 'Alice Smith' reload.txt
+          grep -q 'Bob Jones' reload.txt
